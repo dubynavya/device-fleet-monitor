@@ -1,5 +1,5 @@
 import threading
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -10,24 +10,7 @@ from fleet_monitor.registry import (
     DeviceStatus,
     Heartbeat,
 )
-
-T0 = datetime(2026, 9, 21, 10, 30, 0, tzinfo=timezone.utc)
-
-
-class FakeClock:
-    def __init__(self, start: datetime = T0):
-        self.now = start
-
-    def __call__(self) -> datetime:
-        return self.now
-
-    def advance(self, seconds: float) -> None:
-        self.now += timedelta(seconds=seconds)
-
-
-@pytest.fixture
-def clock():
-    return FakeClock()
+from tests.conftest import T0
 
 
 @pytest.fixture
