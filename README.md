@@ -286,27 +286,12 @@ Validation errors (`422`) include a `detail` list naming the offending field.
 
 ## AI Usage
 
-* **Tools used:** Claude Code (Anthropic Claude) as a pair programmer inside the repository.
-* **What for:** proposing the structure (registry / schemas / API split), drafting the
-  registry, endpoints, simulator, tests and this README, and running the test suite and an
-  end-to-end check of server + simulator.
+* **Tools used:** Claude Code (Anthropic Claude), working inside the repository.
+* **What for:** I used it as a pair programmer. It helped me plan the structure (keeping the registry logic separate from the API layer), write the first drafts of the code, simulator and tests, and put together this README. I reviewed the code, ran the tests, and tested the app by hand before submitting.
 * **Something changed / rejected:**
-  * The first draft of the 404 handler *raised* `HTTPException` from inside a FastAPI
-    exception handler. Starlette doesn't re-handle exceptions raised there, so it would have
-    produced a 500, not a 404. It was rewritten to return a `JSONResponse`, and
-    `test_heartbeat_unknown_device_returns_404` checks the exact body.
-  * The simulator's "keep running in the background" loop originally used an untimed
-    `threading.Event().wait()`. On Windows that blocks `Ctrl+C`, so it was replaced with a
-    short sleep loop.
-  * An option was a background thread that marks devices OFFLINE every few seconds. It was
-    rejected in favour of deriving status on read: it is simpler, has no race, and can be
-    tested exactly with a fake clock.
-* **Personally verified before submitting:** I ran the real server with the real 30-second
-  timeout and the simulator with `--kill device-03:5`. About 25s after its last heartbeat,
-  device-03 was still `ONLINE`. At about 45s it was `OFFLINE` and `/summary` reported
-  `{"total":5,"online":4,"offline":1}`, while the other four devices stayed ONLINE. I also
-  checked that the 30.000s boundary is ONLINE and 30.001s is OFFLINE (`tests/test_registry.py`).
-
+  - One option for the 30-second rule was a background thread that marks devices OFFLINE every few seconds. I went with working out the status each time it's requested instead. It's simpler, there's no timing race between the thread and incoming heartbeats, and I can test it exactly by passing in a fake clock instead of waiting 30 real seconds in tests.
+  - The first version of the "device not found" handler raised an exception inside FastAPI's error handler. That would have returned a 500 error instead of a 404, so it was changed to return the 404 response directly, and a test checks the exact response.
+* **Personally verified before submitting:** I ran the server and the simulator on my own machine with the real 30-second timeout and had device-03 stop after 10 seconds. At first `/summary` showed all 5 devices online. About 40 seconds later it showed `{"total":5,"online":4,"offline":1}`, and `/devices` showed device-03 as OFFLINE while the other four stayed ONLINE. I also went through the test that checks the boundary: exactly 30 seconds is still ONLINE, and anything over 30 seconds is OFFLINE.
 ---
 
 ## Project layout
