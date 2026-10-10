@@ -64,7 +64,7 @@ status = ONLINE  if (now - last_seen) <= timeout
 There is nothing to compile. Create a virtual environment and install the dependencies:
 
 ```bash
-git clone <repo-url> device-fleet-monitor
+git clone https://github.com/dubynavya/device-fleet-monitor.git
 cd device-fleet-monitor
 python -m venv .venv
 ```
